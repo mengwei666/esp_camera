@@ -21,6 +21,9 @@
 #define HREF_GPIO_NUM    23
 #define PCLK_GPIO_NUM    22
 
+
+
+
 // const char* ssid = "huchuang";
 // const char* password = "83754648";
 
