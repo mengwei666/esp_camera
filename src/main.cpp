@@ -1,7 +1,17 @@
+
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "Drv/ESP32_OV5640_AF.h"
 #include <WebServer.h>
+
+#include <Arduino.h>
+#include <ESP32Servo.h>
+
+#define SERVO_PIN 13 // 连接舵机的引脚
+
+// 创建 Servo 对象
+Servo servo;
+
 
 // ESP32 AI-THINKER Board
 #define PWDN_GPIO_NUM    32
@@ -21,7 +31,15 @@
 #define HREF_GPIO_NUM    23
 #define PCLK_GPIO_NUM    22
 
+void rotateServo() {
+  // 将舵机旋转到 0 度
+  servo.write(0);
+  delay(1000); // 等待1秒钟
 
+  // 将舵机旋转到 90 度
+  servo.write(90);
+  delay(1000); // 等待1秒钟
+}
 
 
 // const char* ssid = "huchuang";
@@ -72,6 +90,13 @@ void handle_jpg_stream() {
 
 void setup() {
   Serial.begin(115200);
+
+  // 设置舵机连接的引脚
+  servo.attach(SERVO_PIN);
+
+  // 舵机归位
+  servo.write(0);
+  delay(1000);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -149,6 +174,9 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long lastRotateTime = 0;
+  const unsigned long rotateInterval = 2000; // 舵机旋转间隔时间，单位：毫秒
+
   uint8_t rc = ov5640.getFWStatus();
   // Serial.printf("FW_STATUS = 0x%x\n", rc);
 
@@ -167,4 +195,15 @@ void loop() {
   }
 
   server.handleClient();
+
+  // 每隔一段时间执行舵机旋转任务
+  if (millis() - lastRotateTime >= rotateInterval) {
+    rotateServo();
+    lastRotateTime = millis();
+  }
+
+  // rotateServo();
 }
+
+
+
