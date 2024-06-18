@@ -80,7 +80,7 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
   config.frame_size = FRAMESIZE_QVGA; 
-  config.jpeg_quality = 8;
+  config.jpeg_quality = 12;
   config.fb_count = 2;
 
   esp_err_t err = esp_camera_init(&config);
@@ -112,15 +112,6 @@ void setup() {
 
 void loop() {
   uint8_t rc = ov5640.getFWStatus();
-
-  switch (rc) {
-    case -1:
-      Serial.println("Check your OV5640");
-      break;
-    default:
-      break;
-  }
-
   server.handleClient();
 
   // // 检查舵机状态并执行舵机旋转任务
