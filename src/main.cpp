@@ -182,7 +182,6 @@ void handle_jpg_stream() {
       esp_camera_fb_return(fb);
       return;
     }
-
     size_t fb_len = fb->len;
     server.sendContent(_STREAM_BOUNDARY);
     snprintf((char *)part_buf, 64, _STREAM_PART, fb_len);
@@ -195,3 +194,5 @@ void handle_jpg_stream() {
     }
   }
 }
+
+
