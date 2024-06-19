@@ -40,11 +40,11 @@ const unsigned long rotateInterval = 5000; // 舵机旋转间隔时间，单位�
 OV5640 ov5640 = OV5640();
 WebServer server(80);
 
-const char* ssid = "iPhone 14 plus";
-const char* password = "mwrobot666";
+const char* ssid = "ESP32_Camera";
+const char* password = "12345678";
 
 unsigned long lastPrintTime = 0;
-const unsigned long printInterval = 1000; // 打印间隔时间，单位：毫秒
+const unsigned long printInterval = 2000; // 打印间隔时间，单位：毫秒
 
 // 函数声明
 void rotateServo();
@@ -79,7 +79,7 @@ void setup() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
-  config.frame_size = FRAMESIZE_QVGA; 
+  config.frame_size = FRAMESIZE_VGA; 
   config.jpeg_quality = 12;
   config.fb_count = 2;
 
@@ -92,21 +92,18 @@ void setup() {
   sensor_t* sensor = esp_camera_sensor_get();
   ov5640.start(sensor);
 
-  // 连接WiFi
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  // 配置ESP32为AP模式
+  WiFi.softAP(ssid, password);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
 
   // 设置Web服务器路由
   server.on("/stream", HTTP_GET, handle_jpg_stream);
   server.begin();
   Serial.println("HTTP server started");
   Serial.print("Camera Stream Ready! Go to: http://");
-  Serial.print(WiFi.localIP());
+  Serial.print(IP);
   Serial.println("/stream");
 }
 
@@ -114,18 +111,18 @@ void loop() {
   uint8_t rc = ov5640.getFWStatus();
   server.handleClient();
 
-  // // 检查舵机状态并执行舵机旋转任务
-  // if (millis() - lastRotateTime >= rotateInterval) {
-  //   rotateServo();
-  //   lastRotateTime = millis();
-  // }
+  // 检查舵机状态并执行舵机旋转任务
+  if (millis() - lastRotateTime >= rotateInterval) {
+    rotateServo();
+    lastRotateTime = millis();
+  }
 
-  // // 打印数据
-  // if (millis() - lastPrintTime >= printInterval) {
-  //   Serial.println("Printing data...");
-  //   // 可以在这里添加其他需要打印的数据
-  //   lastPrintTime = millis();
-  // }
+  // 打印数据
+  if (millis() - lastPrintTime >= printInterval) {
+    Serial.println("Printing data...");
+    // 可以在这里添加其他需要打印的数据
+    lastPrintTime = millis();
+  }
 }
 
 void rotateServo() {
@@ -162,18 +159,17 @@ void handle_jpg_stream() {
   server.send(200, _STREAM_CONTENT_TYPE);
 
   while (true) {
+    // 检查舵机状态并执行舵机旋转任务
+    if (millis() - lastRotateTime >= rotateInterval) {
+      rotateServo();
+      lastRotateTime = millis();
+    }
 
-  // 检查舵机状态并执行舵机旋转任务
-  if (millis() - lastRotateTime >= rotateInterval) {
-    rotateServo();
-    lastRotateTime = millis();
-  }
-
-  if (millis() - lastPrintTime >= printInterval) {
-    Serial.println("Printing data...");
-    // 可以在这里添加其他需要打印的数据
-    lastPrintTime = millis();
-  }
+    if (millis() - lastPrintTime >= printInterval) {
+      Serial.println("#1");
+      // 可以在这里添加其他需要打印的数据
+      lastPrintTime = millis();
+    }
 
     fb = esp_camera_fb_get();
     if (!fb) {
@@ -199,7 +195,3 @@ void handle_jpg_stream() {
     }
   }
 }
-
-  
-
-
