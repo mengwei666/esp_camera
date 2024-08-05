@@ -143,10 +143,10 @@ void setup()
   servo.attach(SERVO_PIN);
   servo.write(0); // 舵机归位
 
-  // 初始化LED引脚为输出模式
-  pinMode(LED_GPIO, OUTPUT);
-  // 打开LED灯
-  digitalWrite(LED_GPIO, HIGH);
+  // // 初始化LED引脚为输出模式
+  // pinMode(LED_GPIO, OUTPUT);
+  // // 打开LED灯
+  // digitalWrite(LED_GPIO, HIGH);
 
   // Camera配置
   camera_config_t config;
