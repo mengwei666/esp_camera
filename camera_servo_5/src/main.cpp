@@ -4,6 +4,8 @@
 #include <WebServer.h>
 #include <Arduino.h>
 #include <ESP32Servo.h>
+#include <HTTPClient.h>
+
 
 #define SERVO_PIN 13 // 连接舵机的引脚
 #define LED_GPIO 4   // LED灯的GPIO引脚（根据你的开发板确认）
@@ -38,6 +40,10 @@ unsigned int frameRate = 1; // 默认每秒 1 张照片
 bool capturing = false; // 是否正在拍摄
 int photoCount = 0; // 拍摄的照片计数
 
+int AutoPhotoNum = 0;
+bool AutoPhotoNumFlag = true; 
+
+
 OV5640 ov5640 = OV5640();
 WebServer server(80);
 
@@ -57,13 +63,40 @@ void handle_stop_capturing() {
   server.send(200, "text/plain", "拍摄功能已关闭");
 }
 
-
-
 void rotateServo() 
 {
   if (millis() - lastUpdateTime >= updateInterval) 
   {
     lastUpdateTime = millis();
+
+    if (AutoPhotoNumFlag)
+    {
+      AutoPhotoNum++;
+    }
+
+
+
+    if (AutoPhotoNum >1000)
+    {
+      AutoPhotoNum = 0;
+      AutoPhotoNumFlag  = false;
+      Serial.printf("#2\r\n");
+
+      // 使用 HTTPClient 替代 WiFiClient 进行请求
+      HTTPClient http;
+      http.begin("http://" + WiFi.softAPIP().toString() + "/start_capturing");
+      int httpCode = http.GET();
+      if (httpCode == HTTP_CODE_OK) {
+        Serial.println("Capture request sent successfully.");
+      } else {
+        Serial.println("Failed to send capture request.");
+      }
+      http.end();
+
+      // handle_start_capturing();  
+    }
+
+
     Serial.printf("%d %d\r\n", servoState_1, currentAngle);
     switch (servoState_1) {
       case 0: // 空闲状态
@@ -78,9 +111,9 @@ void rotateServo()
         } else {
           servoState_1 = 0;
           lastUpdateTime = millis();
-          // 自动开启拍摄
-          Serial.printf("#2\r\n");
-          handle_start_capturing(); 
+          // // 自动开启拍摄
+          // Serial.printf("#2\r\n");
+          // handle_start_capturing(); 
         }
         break;
       case 2: // 返回初始位置
@@ -99,6 +132,7 @@ void rotateServo()
 }
 
 void handle_capture() {
+  Serial.printf("#3\r\n");
   if (!capturing) {
     server.send(400, "text/plain", "拍摄功能已关闭");
     return;
